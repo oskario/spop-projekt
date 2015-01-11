@@ -10,6 +10,8 @@ An example problem with solution is presented below:
 
 * [Haskell Platform](https://www.haskell.org/platform/)
 
+Note: on Ubuntu you may simply execute `$ apt-get install haskell-platform`.
+
 ## Running
 
 To make the program simply execute:
