@@ -10,7 +10,7 @@ An example problem with solution is presented below:
 
 * [Haskell Platform](https://www.haskell.org/platform/)
 
-# Running
+## Running
 
 To make the program simply execute:
 
