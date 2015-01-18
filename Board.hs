@@ -4,9 +4,9 @@ import Data.List
 import Data.Maybe
 import Debug.Trace
 
-data Field = Field { fieldType::FieldType, x::Int, y::Int }
+data Field = Field { fieldType::FieldType, x::Int, y::Int, toX::Int, toY::Int }
 
-data FieldType = Tank | House | Empty | Invalid | Marked deriving Eq
+data FieldType = House | Empty | Invalid | Marked | Tank deriving (Eq)
 
 type DescX = [Int]
 
@@ -20,15 +20,15 @@ updateField input @ (Board fields rows cols) newField =
 	in (Board newFields rows cols)
 
 toHouse :: (Int, Int) -> Field
-toHouse x = (Field House (fst x) (snd x))
+toHouse x = (Field House (fst x) (snd x) (-1) (-1))
 
 generateFields :: Int -> Int -> [((Int, Int), Field)]
-generateFields rows columns = [((x,y), (Field Empty x y)) | x <- [0..rows-1], y <- [0..columns-1]]
+generateFields rows columns = [((x,y), (Field Empty x y (-1) (-1))) | x <- [0..rows-1], y <- [0..columns-1]]
 
 toField :: (Int, Int) -> [(Int, Int)] -> Field
 toField coord houses = if coord `elem` houses 
-	then (Field House (fst coord) (snd coord))
-	else (Field Empty (fst coord) (snd coord))
+	then (Field House (fst coord) (snd coord) (-1) (-1))
+	else (Field Empty (fst coord) (snd coord) (-1) (-1))
 
 parseBoard :: String -> String -> String -> Board
 parseBoard line1 line2 line3 = 
@@ -49,16 +49,16 @@ markFieldsInvalid board @ (Board fields a b) =
 	in (Board newFields a b)
 
 markInvalid :: Field -> Field
-markInvalid (Field Empty x y) = (Field Invalid x y)
-markInvalid x @ (Field _ _ _) = x
+markInvalid (Field Empty x y toX toY) = (Field Invalid x y toX toY)
+markInvalid x @ (Field _ _ _ _ _) = x
 
-markTank :: Field -> Field
-markTank (Field Empty x y) = (Field Tank x y)
-markTank x @ (Field _ _ _) = x
+--markTank :: Field -> Field
+--markTank (Field Empty x y) = (Field Tank x y)
+--markTank x @ (Field _ _ _) = x
 
 markMarked :: Field -> Field
-markMarked (Field Empty x y) = (Field Marked x y)
-markMarked x @ (Field _ _ _) = x
+markMarked (Field Empty x y toX toY) = (Field Marked x y toX toY)
+markMarked x @ (Field _ _ _ _ _) = x
 
 placeSingleNeighbouredTanks :: Board -> Board
 placeSingleNeighbouredTanks board @ (Board fields rows cols) =
@@ -91,16 +91,17 @@ isBoardCorrect :: Board -> Bool
 isBoardCorrect board @ (Board fields cols rows) =
 
 	foldl (\a b -> a && b) True [ correct | c <- [0..(length cols)-1], let tanks = countTanks (getColumn board c), let correct = tanks == (rows !! c)] &&
+	foldl (\a b -> a && b) True [ correct | r <- [0..(length rows)-1], let tanks = countTanks (getRow board r), let correct = tanks == (cols !! r)] &&
 	foldl (\a b -> a && b) True [ correct | field <- fields, let correct = isFieldCorrect field board ]
 
 isFieldCorrect :: Field -> Board -> Bool
-isFieldCorrect field board = let attachedTanks = neighbours isTank (x field) (y field) board
+isFieldCorrect field board = let attachedTanks = length [ place | place <- neighbours isTank (x field) (y field) board, (x field) == (toX place), (y field) == (toY place)]
 	in 
 	--trace ("isFieldCorrect " ++ show (fieldType field) ++ " " ++ show (x field) ++ " " ++ show (y field) ++ " = " ++ show (attachedTanks))
 	if fieldType field == House then 
 		--trace ("F: " ++ show (x field) ++ " " ++ show (y field) ++ " " ++ show (attachedTanks)) 
 		--trace 
-		length attachedTanks == 1 else 
+		attachedTanks == 1 else 
 		--trace ("A") 
 		True 
 
@@ -109,15 +110,20 @@ getColumn (Board fields rows cols) index =
 	--trace ("getColumn " ++ show index ++ " = " ++ show [ row !! index | let xs = (splitEvery (length cols) fields), row <- xs] )
 	[ row !! index | let xs = (splitEvery (length cols) fields), row <- xs]
 
+getRow :: Board -> Int -> [Field]
+getRow (Board fields rows cols) index = 
+	--trace ("getColumn " ++ show index ++ " = " ++ show [ row !! index | let xs = (splitEvery (length cols) fields), row <- xs] )
+	(splitEvery (length cols) fields) !! index
+
 countTanks :: [Field] -> Int
 countTanks fields = length [ x | x <- fields, isTank x]
 
 instance Show Field where
-	show (Field Tank _ _) = " T "
-	show (Field House _ _) = " H "
-	show (Field Empty _ _) = "   "
-	show (Field Marked _ _) = " M "
-	show (Field Invalid _ _) = "   "
+	show (Field Tank _ _ _ _) = " T "
+	show (Field House _ _ _ _) = " H "
+	show (Field Empty _ _ _ _) = "   "
+	show (Field Marked _ _ _ _) = " M "
+	show (Field Invalid _ _ _ _) = "   "
 
 instance Show Board where
 	show (Board fields rows columns) = 

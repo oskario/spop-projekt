@@ -17,7 +17,14 @@ solve fileName = do
 	inputBoard <- loadInputFile fileName
 	putStrLn ("Loaded board: \n" ++ show inputBoard)
 	--let solvedBoard = updateField (placeTanks inputBoard) (Field Tank 0 0)
-	let solvedBoard = (placeTanks inputBoard) `updateField` (Field Tank 0 2) `updateField` (Field Tank 2 2) `updateField` (Field Tank 2 4) `updateField` (Field Tank 3 0) `updateField` (Field Tank 4 3) `updateField` (Field Tank 4 5) `updateField` (Field Tank 5 1)
+	let solvedBoard = (placeTanks inputBoard) 
+		`updateField` (Field Tank 0 2 0 1) 
+		`updateField` (Field Tank 2 2 3 2) 
+		`updateField` (Field Tank 2 4 3 4) 
+		`updateField` (Field Tank 3 0 4 0) 
+		`updateField` (Field Tank 4 3 4 4) 
+		`updateField` (Field Tank 4 5 5 5) 
+		`updateField` (Field Tank 5 1 5 2)
 	putStrLn ("Is correct: " ++ show (isBoardCorrect solvedBoard))
 	putStrLn ("Solution: \n" ++ show solvedBoard)
 	
