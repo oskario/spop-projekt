@@ -12,13 +12,10 @@ loadInputFile fileName = do
 	    houses = linesArray !! 2 in 
 	    return $ parseBoard rows columns houses
 
-solveB :: Board -> Board
-solveB input = input
-
 solve :: String -> IO ()
 solve fileName = do
 	inputBoard <- loadInputFile fileName
-	putStrLn ("Loaded board: " ++ show inputBoard)
+	putStrLn ("Loaded board: \n" ++ show inputBoard)
 	
 printUsage :: String -> IO ()
 printUsage progName = do
