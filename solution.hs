@@ -1,29 +1,39 @@
+module Main where
 import System.Environment 
+import Board
 
-data Board = Board [String] deriving (Show)
+--solve :: [Int] -> [Int] -> [(Int, Int)] -> [String] --[(Int, Int)]
+--solve rows columns homes = [show row | row <- rows]
 
-solve :: [Int] -> [Int] -> [(Int, Int)] -> [String] --[(Int, Int)]
-solve rows columns homes = [show row | row <- rows]
-
-loadInputFile :: String -> IO ()
+loadInputFile :: String -> IO Board
 loadInputFile fileName = do
 	putStrLn ("Opening " ++ fileName ++ "...")
 	contents <- readFile fileName
 	let linesArray = lines contents
-	    rows = read (linesArray !! 0) :: [Int]
-	    columns = read (linesArray !! 1) :: [Int]
-	    homes = read (linesArray !! 2) :: [(Int, Int)]
-	    results = solve rows columns homes
-	putStrLn ("Rows: " ++ show rows)
-	putStrLn ("Columns: " ++ show columns)
-	putStrLn ("Homes: " ++ show homes)
-	putStrLn ("Result: " ++ show results)    
+	    rows = linesArray !! 0
+	    columns = linesArray !! 1
+	    houses = linesArray !! 2 in 
+	    return $ parseBoard rows columns houses
+
+solveB :: Board -> Board
+solveB input = input
+
+solve :: String -> IO ()
+solve fileName = do
+	inputBoard <- loadInputFile fileName
+	putStrLn ("Loaded board: " ++ show inputBoard)
 	
+printUsage :: String -> IO ()
+printUsage progName = do
+	putStrLn ("Usage: " ++ progName ++ " [input file]")
+
+run :: [String] -> String -> IO ()
+run args progName
+	| argCount < 1 || argCount > 1 = printUsage progName
+	| argCount == 1 = solve (args !! 0)
+	where argCount = length args
 
 main = do  
     args <- getArgs 
     progName <- getProgName 
-    if length args == 1
-    	then loadInputFile (head args)
-    	else putStrLn ("Usage: " ++ progName ++ " [input file]")
-    return ()
+    run args progName
