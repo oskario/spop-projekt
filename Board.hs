@@ -46,7 +46,7 @@ placeTanks inputBoard =
 markFieldsInvalid :: Board -> Board
 markFieldsInvalid board @ (Board fields a b) = 
 	let newFields = [ f | field <- fields, let nbours = neighbours isHouse (x field) (y field) board, let f = if (length nbours) > 0 then field else markInvalid field ]
-	in updateField (Board newFields a b) (Field Tank 2 4)
+	in (Board newFields a b)
 
 markInvalid :: Field -> Field
 markInvalid (Field Empty x y) = (Field Invalid x y)
@@ -89,18 +89,35 @@ isTank = \field -> fieldType field == Tank
 
 isBoardCorrect :: Board -> Bool
 isBoardCorrect board @ (Board fields cols rows) =
+
+	foldl (\a b -> a && b) True [ correct | c <- [0..(length cols)-1], let tanks = countTanks (getColumn board c), let correct = tanks == (rows !! c)] &&
 	foldl (\a b -> a && b) True [ correct | field <- fields, let correct = isFieldCorrect field board ]
 
 isFieldCorrect :: Field -> Board -> Bool
 isFieldCorrect field board = let attachedTanks = neighbours isTank (x field) (y field) board
-	in if fieldType field == House then length attachedTanks == 1 else True 
+	in 
+	--trace ("isFieldCorrect " ++ show (fieldType field) ++ " " ++ show (x field) ++ " " ++ show (y field) ++ " = " ++ show (attachedTanks))
+	if fieldType field == House then 
+		--trace ("F: " ++ show (x field) ++ " " ++ show (y field) ++ " " ++ show (attachedTanks)) 
+		--trace 
+		length attachedTanks == 1 else 
+		--trace ("A") 
+		True 
+
+getColumn :: Board -> Int -> [Field]
+getColumn (Board fields rows cols) index = 
+	--trace ("getColumn " ++ show index ++ " = " ++ show [ row !! index | let xs = (splitEvery (length cols) fields), row <- xs] )
+	[ row !! index | let xs = (splitEvery (length cols) fields), row <- xs]
+
+countTanks :: [Field] -> Int
+countTanks fields = length [ x | x <- fields, isTank x]
 
 instance Show Field where
 	show (Field Tank _ _) = " T "
 	show (Field House _ _) = " H "
 	show (Field Empty _ _) = "   "
 	show (Field Marked _ _) = " M "
-	show (Field Invalid _ _) = " X "
+	show (Field Invalid _ _) = "   "
 
 instance Show Board where
 	show (Board fields rows columns) = 

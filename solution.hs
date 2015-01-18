@@ -16,7 +16,8 @@ solve :: String -> IO ()
 solve fileName = do
 	inputBoard <- loadInputFile fileName
 	putStrLn ("Loaded board: \n" ++ show inputBoard)
-	let solvedBoard = placeTanks inputBoard
+	--let solvedBoard = updateField (placeTanks inputBoard) (Field Tank 0 0)
+	let solvedBoard = (placeTanks inputBoard) `updateField` (Field Tank 0 2) `updateField` (Field Tank 2 2) `updateField` (Field Tank 2 4) `updateField` (Field Tank 3 0) `updateField` (Field Tank 4 3) `updateField` (Field Tank 4 5) `updateField` (Field Tank 5 1)
 	putStrLn ("Is correct: " ++ show (isBoardCorrect solvedBoard))
 	putStrLn ("Solution: \n" ++ show solvedBoard)
 	
