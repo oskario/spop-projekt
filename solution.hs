@@ -16,6 +16,8 @@ solve :: String -> IO ()
 solve fileName = do
 	inputBoard <- loadInputFile fileName
 	putStrLn ("Loaded board: \n" ++ show inputBoard)
+	let solvedBoard = placeTanks inputBoard
+	putStrLn ("Solution: \n" ++ show solvedBoard)
 	
 printUsage :: String -> IO ()
 printUsage progName = do
