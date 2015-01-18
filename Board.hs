@@ -16,7 +16,7 @@ toHouse :: (Int, Int) -> Field
 toHouse x = (House (fst x) (snd x))
 
 generateFields :: Int -> Int -> [((Int, Int), Field)]
-generateFields rows columns = [((x,y), (Empty x y)) | x <- [0..rows], y <- [0..columns]]
+generateFields rows columns = [((x,y), (Empty x y)) | x <- [0..rows-1], y <- [0..columns-1]]
 
 toField :: (Int, Int) -> [(Int, Int)] -> Field
 toField coord houses = if coord `elem` houses 
@@ -38,9 +38,6 @@ instance Show Field where
 
 instance Show Board where
 	show (Board fields rows columns) = unlines [ show x | x <- (splitEvery (length rows) fields) ]
-	--show (Board fields rows columns) = show (intersperse " " [a | a <- (splitEvery (length rows) fields)])
-	--show (Board fields rows columns) = [putStrLn (show a) | a <- (splitEvery (length rows) fields)]
-	--show (Board fields rows columns) = mapM_ putStrLn (splitEvery (length rows) fields)
 
 splitEvery _ [] = []
 splitEvery n list = first : (splitEvery n rest)
