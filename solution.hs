@@ -17,6 +17,7 @@ solve fileName = do
 	inputBoard <- loadInputFile fileName
 	putStrLn ("Loaded board: \n" ++ show inputBoard)
 	let solvedBoard = placeTanks inputBoard
+	putStrLn ("Is correct: " ++ show (isBoardCorrect solvedBoard))
 	putStrLn ("Solution: \n" ++ show solvedBoard)
 	
 printUsage :: String -> IO ()
