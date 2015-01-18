@@ -1,10 +1,12 @@
 module Board where
 import System.Environment 
 import Data.List
+import Data.Maybe
+import Debug.Trace
 
 data Field = Field { fieldType::FieldType, x::Int, y::Int }
 
-data FieldType = Tank | House | Empty | Invalid
+data FieldType = Tank | House | Empty | Invalid deriving Eq
 
 type DescX = [Int]
 
@@ -37,18 +39,24 @@ placeTanks inputBoard =
 	in boardWithInvalidMarked
 
 markFieldsInvalid :: Board -> Board
-markFieldsInvalid (Board fields a b) = 
-	let newFields = [ markInvalid field | field <- fields ]
+markFieldsInvalid board @ (Board fields a b) = 
+	let newFields = [ f | field <- fields, let nbours = neighbours (x field) (y field) board, let f = if (length nbours) > 0 then field else markInvalid field ]
 	in Board newFields a b
 
 markInvalid :: Field -> Field
-markInvalid x @ (Field Tank _ _) = x
-markInvalid x @ (Field House _ _) = x
 markInvalid (Field Empty x y) = (Field Invalid x y)
-markInvalid x @ (Field Invalid _ _) = x
+markInvalid x @ (Field _ _ _) = x
 
-getFieldNeighbours :: Int -> Int -> Board -> [Field]
-getFieldNeighbours x y (Board fields rows cols ) = fields
+neighbours :: Int -> Int -> Board -> [Field]
+neighbours x y board @ (Board fields rows cols) = 
+	maybeToList (getNeighbour (x-1) (y) board) ++
+	maybeToList (getNeighbour (x+1) (y) board) ++
+	maybeToList (getNeighbour (x) (y-1) board) ++
+	maybeToList (getNeighbour (x) (y+1) board)
+
+getNeighbour :: Int -> Int -> Board -> Maybe Field
+getNeighbour a b (Board fields rows cols) = 
+	find (\c -> x c == a && y c == b && fieldType c == House) fields
 
 instance Show Field where
 	show (Field Tank _ _) = " T "
