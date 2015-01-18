@@ -2,9 +2,9 @@ module Board where
 import System.Environment 
 import Data.List
 
-data Field = Tank Int Int | House Int Int | Empty Int Int | Invalid Int Int
+data Field = Field { fieldType::FieldType, x::Int, y::Int }
 
---type Fields = [((Int, Int), Field)]
+data FieldType = Tank | House | Empty | Invalid
 
 type DescX = [Int]
 
@@ -13,15 +13,15 @@ type DescY = [Int]
 data Board = Board { fields::[Field], rows::[Int], cols::[Int] }
 
 toHouse :: (Int, Int) -> Field
-toHouse x = (House (fst x) (snd x))
+toHouse x = (Field House (fst x) (snd x))
 
 generateFields :: Int -> Int -> [((Int, Int), Field)]
-generateFields rows columns = [((x,y), (Empty x y)) | x <- [0..rows-1], y <- [0..columns-1]]
+generateFields rows columns = [((x,y), (Field Empty x y)) | x <- [0..rows-1], y <- [0..columns-1]]
 
 toField :: (Int, Int) -> [(Int, Int)] -> Field
 toField coord houses = if coord `elem` houses 
-	then (House (fst coord) (snd coord))
-	else (Empty (fst coord) (snd coord))
+	then (Field House (fst coord) (snd coord))
+	else (Field Empty (fst coord) (snd coord))
 
 parseBoard :: String -> String -> String -> Board
 parseBoard line1 line2 line3 = 
@@ -42,19 +42,19 @@ markFieldsInvalid (Board fields a b) =
 	in Board newFields a b
 
 markInvalid :: Field -> Field
-markInvalid x @ (Tank _ _) = x
-markInvalid x @ (House _ _) = x
-markInvalid (Empty x y) = (Invalid x y)
-markInvalid x @ (Invalid _ _) = x
+markInvalid x @ (Field Tank _ _) = x
+markInvalid x @ (Field House _ _) = x
+markInvalid (Field Empty x y) = (Field Invalid x y)
+markInvalid x @ (Field Invalid _ _) = x
 
 getFieldNeighbours :: Int -> Int -> Board -> [Field]
 getFieldNeighbours x y (Board fields rows cols ) = fields
 
 instance Show Field where
-	show (Tank _ _) = " T "
-	show (House _ _) = " H "
-	show (Empty _ _) = "   "
-	show (Invalid _ _) = " X "
+	show (Field Tank _ _) = " T "
+	show (Field House _ _) = " H "
+	show (Field Empty _ _) = "   "
+	show (Field Invalid _ _) = " X "
 
 instance Show Board where
 	show (Board fields rows columns) = unlines [ show x | x <- (splitEvery (length rows) fields) ]
