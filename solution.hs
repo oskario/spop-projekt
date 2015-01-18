@@ -2,9 +2,6 @@ module Main where
 import System.Environment 
 import Board
 
---solve :: [Int] -> [Int] -> [(Int, Int)] -> [String] --[(Int, Int)]
---solve rows columns homes = [show row | row <- rows]
-
 loadInputFile :: String -> IO Board
 loadInputFile fileName = do
 	putStrLn ("Opening " ++ fileName ++ "...")
