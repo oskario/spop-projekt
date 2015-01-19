@@ -22,7 +22,6 @@ updateField input @ (Board fields rows cols) newField =
 updateFields :: [Field] -> [Field] -> [Field]
 updateFields oldFields (x:xs) = updateFieldInFields (updateFields oldFields xs) x 
 updateFields oldFields [] = oldFields
---updateFields oldFields [newField] = [ updated | oldField <- oldFields, let updated = if ((x oldField) == (x newField) && (y oldField) == (y newField)) then newField else oldField ]
 
 updateFieldInFields :: [Field] -> Field -> [Field]
 updateFieldInFields oldFields newField = [ updated | oldField <- oldFields, let updated = if ((x oldField) == (x newField) && (y oldField) == (y newField)) then newField else oldField ]
@@ -54,10 +53,7 @@ placeTanks inputBoard =
 withTankVariation :: Board -> [Field] -> Board	
 withTankVariation board @ (Board fields rows cols) tanks = 
 	let newFields = updateFields fields tanks
-	--let newFields = [ f | field <- fields, tank <- tanks, let f = if ((x field) == (x tank) && (y field) == (y tank)) then tank else field ]
-	--let newFields = [ f | field <- fields, tank <- tanks, let f = if ((x field) == (x tank) && (y field) == (y tank)) then trace ("A") tank else trace ("Tanks: " ++ show tanks ++ " -> " ++ show field ++ show tank) field ]
-	in trace ("->\n" ++ show board) (Board newFields rows cols)
-	--in trace ("Before:\n" ++ show board ++ "\nAfter:\n" ++ show (Board newFields rows cols)) (Board newFields rows cols)
+	in (Board newFields rows cols)
 
 markFieldsInvalid :: Board -> Board
 markFieldsInvalid board @ (Board fields a b) = 
@@ -99,7 +95,6 @@ isTank = \field -> fieldType field == Tank
 
 isBoardCorrect :: Board -> Bool
 isBoardCorrect board @ (Board fields cols rows) =
-	trace ("IS CORRECT")
 	foldl (\a b -> a && b) True [ correct | c <- [0..(length cols)-1], let tanks = countTanks (getColumn board c), let correct = tanks == (rows !! c)] &&
 	foldl (\a b -> a && b) True [ correct | r <- [0..(length rows)-1], let tanks = countTanks (getRow board r), let correct = tanks == (cols !! r)] &&
 	foldl (\a b -> a && b) True [ correct | field <- fields, let correct = isFieldCorrect field board ]
@@ -131,19 +126,12 @@ getPossibleTanks board @ (Board fields _ _) = [tanks | house <- fields, isHouse 
 
 allPossibleTankVariations :: Board -> [[Field]]
 allPossibleTankVariations board = 
-	--trace ("allPossibleTankVariations: " ++ show (sequence (getPossibleTanks board)))
 	sequence (getPossibleTanks board)
---allPossibleTankVariations board = [[ x | x <- trace ("A" ++ show a ) (p !! a) ] | let p = getPossibleTanks board, a <- [0..(length p)-1]]
---allPossibleTankVariations board = [ [ x | x <- xs ] | xs <- getPossibleTanks board]
 
 allVariations :: [[Int]] -> [[Int]]
 allVariations input = sequence input
---allVariations input = [ x:y:[] | x <- (input !! 0), y <- (input !! 1)]
 
 instance Show Field where
-	--show (Field Tank x y _ _) = "T(" ++ show x ++ "," ++ show y ++ ")"
-	--show (Field House x y _ _) = "H(" ++ show x ++ "," ++ show y ++ ")"
-	--show (Field Empty x y _ _) = "E(" ++ show x ++ "," ++ show y ++ ")"
 	show (Field Tank _ _ _ _) = " T "
 	show (Field House _ _ _ _) = " H "
 	show (Field Empty _ _ _ _) = "   "
