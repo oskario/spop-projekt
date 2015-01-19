@@ -20,7 +20,7 @@ instance Show Field where
 	show (Field Invalid _ _ _ _) = " X "
 
 instance Show Board where
-	show (Board fields rows columns) = 
+	show (Board fields rows columns) =
 		"  " ++ show [ show c | c <- columns ] ++ "\n" ++
 		unlines [ show (rows !! index) ++ " " ++ show x | let listed = (splitEvery (length columns) fields), (x, index) <- listed `zip` [0..]]
 
@@ -90,9 +90,9 @@ getNeighbour f a b (Board fields rows cols) =
 
 -- checks if given board is correct, i.e. each house has exactly one tank associated with it
 isBoardCorrect :: Board -> Bool
-isBoardCorrect board @ (Board fields cols rows) =
-	foldl (\a b -> a && b) True [ correct | c <- [0..(length cols)-1], let tanks = countTanks (getColumn board c), let correct = tanks == (rows !! c)] &&
-	foldl (\a b -> a && b) True [ correct | r <- [0..(length rows)-1], let tanks = countTanks (getRow board r), let correct = tanks == (cols !! r)] &&
+isBoardCorrect board @ (Board fields rows cols) =
+	foldl (\a b -> a && b) True [ correct | c <- [0..(length cols)-1], let tanks = countTanks (getColumn board c), let correct = tanks == (cols !! c)] &&
+	foldl (\a b -> a && b) True [ correct | r <- [0..(length rows)-1], let tanks = countTanks (getRow board r), let correct = tanks == (rows !! r)] &&
 	foldl (\a b -> a && b) True [ correct | field <- fields, let correct = isFieldCorrect field board ]
 
 -- checks if given field is correct, i.e. if it is a house it has to have one (and only one) tank connected
@@ -120,7 +120,7 @@ getPossibleTanks board @ (Board fields _ _) = [tanks | house <- fields, isHouse 
 
 -- get all possible neighbouring fields that a tank can be placed on
 getPossibleTanksForField :: Field -> Board -> [Field]
-getPossibleTanksForField (Field _ a b _ _) board @ (Board fields cols rows) =
+getPossibleTanksForField (Field _ a b _ _) board @ (Board fields rows cols) =
 	map (\f -> (Field Tank (x f) (y f) a b)) (neighbours isEmpty a b board)
 
 -- returns all possible sets of fields, on which tanks can be placed
@@ -143,6 +143,9 @@ isEmpty = \field -> fieldType field == Empty
 -- returns true if given field is a type of Tank (for readability only)
 isTank :: (Field -> Bool)
 isTank = \field -> fieldType field == Tank
+
+showSolution :: Board -> String
+showSolution (Board fields rows cols) = show [(x field, y field) | field <- fields, isTank field]
 
 -- splits given list in chunks with a maximum length of n
 splitEvery _ [] = []

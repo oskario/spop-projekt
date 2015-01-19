@@ -19,19 +19,28 @@ solve fileName = do
 	inputBoard <- loadInputFile fileName
 	putStrLn ("Loaded board: \n" ++ show inputBoard)
 	let solvedBoard = placeTanks inputBoard
-	putStrLn ("Solution: \n" ++ show solvedBoard)
+	putStrLn ("Solution: \n" ++ show solvedBoard)	
 	
 -- prints program usage
 printUsage :: String -> IO ()
 printUsage progName = do
-	putStrLn ("Usage: " ++ progName ++ " [input file]")
+	putStrLn ("Usage: " ++ progName ++ " [input_file] [-save output_file]")
 
 -- runs the program verifying provided arguments
 run :: [String] -> String -> IO ()
 run args progName
-	| argCount < 1 || argCount > 1 = printUsage progName
 	| argCount == 1 = solve (args !! 0)
+	| argCount == 3 && (args !! 1) == "-save" = solveWithSave (args !! 0) (args !! 2)
+	| otherwise = printUsage progName
 	where argCount = length args
+
+solveWithSave :: String -> String -> IO ()
+solveWithSave fileName outputFile = do
+	inputBoard <- loadInputFile fileName
+	putStrLn ("Loaded board: \n" ++ show inputBoard)
+	let solvedBoard = placeTanks inputBoard
+	writeFile outputFile ((showSolution solvedBoard) ++ "\n")
+	putStrLn ("Solution: \n" ++ show solvedBoard)	
 
 -- main function
 main = do  
