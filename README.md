@@ -16,11 +16,15 @@ Note: on Ubuntu you may simply execute `$ apt-get install haskell-platform`.
 
 To make the program simply execute:
 
-	$ ghc --make solution
+	$ ghc --make Main
 
-Than you can execute it by invokink:
+Than you can execute it by invoking:
 
-	$ ./solution
+	$ ./Main [input_file]
+
+Optionally, to drop an output solution to a file execute the program as following:
+
+	$ ./Main [input_file] -save [output_file] 
 
 ## Input structure
 
