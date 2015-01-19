@@ -20,15 +20,15 @@ instance Show Field where
 	show (Field Invalid _ _ _ _) = " X "
 
 instance Show Board where
-	show (Board fields rows columns) =
+	show (Board fields rows columns) = 
 		"  " ++ show [ show c | c <- columns ] ++ "\n" ++
 		unlines [ show (rows !! index) ++ " " ++ show x | let listed = (splitEvery (length columns) fields), (x, index) <- listed `zip` [0..]]
 
 -- places tanks on a Board
 placeTanks :: Board -> Board
 placeTanks inputBoard = 
-	let solved = [board | tankVariation <- allPossibleTankVariations (markFieldsInvalid inputBoard), let board = withTankVariation inputBoard tankVariation, isBoardCorrect board] !! 0
-	in solved
+	let solved = [board | tankVariation <- allPossibleTankVariations (markFieldsInvalid inputBoard), let board = withTankVariation inputBoard tankVariation, isBoardCorrect board]
+	in if (length solved > 0) then head solved else error "No solution found"
 
 -- updates given list of fields with a new one (swaps fields with matching coordinates)
 updateFields :: [Field] -> [Field] -> [Field]
@@ -144,6 +144,7 @@ isEmpty = \field -> fieldType field == Empty
 isTank :: (Field -> Bool)
 isTank = \field -> fieldType field == Tank
 
+-- prints solution
 showSolution :: Board -> String
 showSolution (Board fields rows cols) = show [(x field, y field) | field <- fields, isTank field]
 
