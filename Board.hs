@@ -4,39 +4,52 @@ import Data.List
 import Data.Maybe
 import Debug.Trace
 
-data Field = Field { fieldType::FieldType, x::Int, y::Int, toX::Int, toY::Int }
-
-data FieldType = House | Empty | Invalid | Marked | Tank deriving (Eq)
-
-type DescX = [Int]
-
-type DescY = [Int]
-
+-- main board structure
 data Board = Board { fields::[Field], rows::[Int], cols::[Int] }
 
-updateField :: Board -> Field -> Board
-updateField input @ (Board fields rows cols) newField = 
-	let newFields = [ updated | oldField <- fields, let updated = if ((x oldField) == (x newField) && (y oldField) == (y newField)) then newField else oldField ]
-	in (Board newFields rows cols)
+-- a single field on Board
+data Field = Field { fieldType::FieldType, x::Int, y::Int, toX::Int, toY::Int }
 
+-- all possible field types
+data FieldType = House | Empty | Invalid | Tank deriving (Eq)
+
+instance Show Field where
+	show (Field Tank _ _ _ _) = " T "
+	show (Field House _ _ _ _) = " H "
+	show (Field Empty _ _ _ _) = "   "
+	show (Field Invalid _ _ _ _) = " X "
+
+instance Show Board where
+	show (Board fields rows columns) = 
+		"  " ++ show [ show c | c <- columns ] ++ "\n" ++
+		unlines [ show (rows !! index) ++ " " ++ show x | let listed = (splitEvery (length columns) fields), (x, index) <- listed `zip` [0..]]
+
+-- places tanks on a Board
+placeTanks :: Board -> Board
+placeTanks inputBoard = 
+	let solved = [board | tankVariation <- allPossibleTankVariations (markFieldsInvalid inputBoard), let board = withTankVariation inputBoard tankVariation, isBoardCorrect board] !! 0
+	in solved
+
+-- updates given list of fields with a new one (swaps fields with matching coordinates)
 updateFields :: [Field] -> [Field] -> [Field]
 updateFields oldFields (x:xs) = updateFieldInFields (updateFields oldFields xs) x 
 updateFields oldFields [] = oldFields
 
+-- updates given list of fields with a new field (swaps given field with a field that has matching coordinates)
 updateFieldInFields :: [Field] -> Field -> [Field]
 updateFieldInFields oldFields newField = [ updated | oldField <- oldFields, let updated = if ((x oldField) == (x newField) && (y oldField) == (y newField)) then newField else oldField ]
 
-toHouse :: (Int, Int) -> Field
-toHouse x = (Field House (fst x) (snd x) (-1) (-1))
-
+-- generates an empty list of Fields of a given size
 generateFields :: Int -> Int -> [((Int, Int), Field)]
 generateFields rows columns = [((x,y), (Field Empty x y (-1) (-1))) | x <- [0..rows-1], y <- [0..columns-1]]
 
+-- converts coordinates to a proper Field structure
 toField :: (Int, Int) -> [(Int, Int)] -> Field
 toField coord houses = if coord `elem` houses 
 	then (Field House (fst coord) (snd coord) (-1) (-1))
 	else (Field Empty (fst coord) (snd coord) (-1) (-1))
 
+-- parses given input file lines and produces a valid Board
 parseBoard :: String -> String -> String -> Board
 parseBoard line1 line2 line3 = 
 	let rows = read line1 :: [Int]
@@ -45,34 +58,24 @@ parseBoard line1 line2 line3 =
 	    parsedFields = [ toField (fst x) inputHouses | x <- generateFields (length rows) (length columns) ]
 	in (Board parsedFields rows columns)
 
-placeTanks :: Board -> Board
-placeTanks inputBoard = 
-	let solved = [board | tankVariation <- allPossibleTankVariations (markFieldsInvalid inputBoard), let board = withTankVariation inputBoard tankVariation, isBoardCorrect board] !! 0
-	in solved
-
+-- applies given tank variation to a given board
 withTankVariation :: Board -> [Field] -> Board	
 withTankVariation board @ (Board fields rows cols) tanks = 
 	let newFields = updateFields fields tanks
 	in (Board newFields rows cols)
 
+-- finds all fields that do not connect with any houses and marks them as invalid (there should be no Tanks not connected to any House)
 markFieldsInvalid :: Board -> Board
 markFieldsInvalid board @ (Board fields a b) = 
 	let newFields = [ f | field <- fields, let nbours = neighbours isHouse (x field) (y field) board, let f = if (length nbours) > 0 then field else markInvalid field ]
 	in (Board newFields a b)
 
+-- marks given field as invalid one (there cannot be any Tank or House placed on it)
 markInvalid :: Field -> Field
 markInvalid (Field Empty x y toX toY) = (Field Invalid x y toX toY)
 markInvalid x @ (Field _ _ _ _ _) = x
 
-markMarked :: Field -> Field
-markMarked (Field Empty x y toX toY) = (Field Marked x y toX toY)
-markMarked x @ (Field _ _ _ _ _) = x
-
-placeSingleNeighbouredTanks :: Board -> Board
-placeSingleNeighbouredTanks board @ (Board fields rows cols) =
-	let newFields = [ f | field <- fields, let nbours = neighbours isHouse (x field) (y field) board, let f = if (length nbours) == 1 then markMarked field else field ]
-	in Board newFields rows cols
-
+-- returns list of neighbours for a given field
 neighbours :: (Field -> Bool) -> Int -> Int -> Board -> [Field]
 neighbours f x y board @ (Board fields rows cols) = 
 	maybeToList (getNeighbour f (x-1) (y) board) ++
@@ -80,69 +83,68 @@ neighbours f x y board @ (Board fields rows cols) =
 	maybeToList (getNeighbour f (x) (y-1) board) ++
 	maybeToList (getNeighbour f (x) (y+1) board)
 
+-- returns field indicated by a given position (a, b) as a Maybe
 getNeighbour :: (Field -> Bool) -> Int -> Int -> Board -> Maybe Field
 getNeighbour f a b (Board fields rows cols) = 
 	find (\c -> x c == a && y c == b && f c) fields
 
-isHouse :: (Field -> Bool)
-isHouse = \field -> fieldType field == House
-
-isEmpty :: (Field -> Bool)
-isEmpty = \field -> fieldType field == Empty
-
-isTank :: (Field -> Bool)
-isTank = \field -> fieldType field == Tank
-
+-- checks if given board is correct, i.e. each house has exactly one tank associated with it
 isBoardCorrect :: Board -> Bool
 isBoardCorrect board @ (Board fields cols rows) =
 	foldl (\a b -> a && b) True [ correct | c <- [0..(length cols)-1], let tanks = countTanks (getColumn board c), let correct = tanks == (rows !! c)] &&
 	foldl (\a b -> a && b) True [ correct | r <- [0..(length rows)-1], let tanks = countTanks (getRow board r), let correct = tanks == (cols !! r)] &&
 	foldl (\a b -> a && b) True [ correct | field <- fields, let correct = isFieldCorrect field board ]
 
+-- checks if given field is correct, i.e. if it is a house it has to have one (and only one) tank connected
 isFieldCorrect :: Field -> Board -> Bool
 isFieldCorrect field board = let attachedTanks = length [ place | place <- neighbours isTank (x field) (y field) board, (x field) == (toX place), (y field) == (toY place)]
-	in 
-	if fieldType field == House then 
-		attachedTanks == 1 else 
-		True 
+	in if fieldType field == House then attachedTanks == 1 else True 
 
+-- get column of fields from a board indicated by a given index number
 getColumn :: Board -> Int -> [Field]
 getColumn (Board fields rows cols) index = 
 	[ row !! index | let xs = (splitEvery (length cols) fields), row <- xs]
 
+-- get row of fields from a board indicated by a given index number
 getRow :: Board -> Int -> [Field]
 getRow (Board fields rows cols) index = 
 	(splitEvery (length cols) fields) !! index
 
+-- count how many tanks are there in a given list of fields
 countTanks :: [Field] -> Int
 countTanks fields = length [ x | x <- fields, isTank x]
 
+-- get all possible fields that tanks can be placed on (a list of fields is returned for each house)
+getPossibleTanks :: Board -> [[Field]]
+getPossibleTanks board @ (Board fields _ _) = [tanks | house <- fields, isHouse house, let tanks = getPossibleTanksForField house board]
+
+-- get all possible neighbouring fields that a tank can be placed on
 getPossibleTanksForField :: Field -> Board -> [Field]
 getPossibleTanksForField (Field _ a b _ _) board @ (Board fields cols rows) =
 	map (\f -> (Field Tank (x f) (y f) a b)) (neighbours isEmpty a b board)
 
-getPossibleTanks :: Board -> [[Field]]
-getPossibleTanks board @ (Board fields _ _) = [tanks | house <- fields, isHouse house, let tanks = getPossibleTanksForField house board]
-
+-- returns all possible sets of fields, on which tanks can be placed
 allPossibleTankVariations :: Board -> [[Field]]
 allPossibleTankVariations board = 
 	sequence (getPossibleTanks board)
 
+-- returns all possible variations of a given lists of lists (taking one element from each list at a time)
 allVariations :: [[Int]] -> [[Int]]
 allVariations input = sequence input
 
-instance Show Field where
-	show (Field Tank _ _ _ _) = " T "
-	show (Field House _ _ _ _) = " H "
-	show (Field Empty _ _ _ _) = "   "
-	show (Field Marked _ _ _ _) = " M "
-	show (Field Invalid _ _ _ _) = " X "
+-- returns true if given field is a type of House (for readability only)
+isHouse :: (Field -> Bool)
+isHouse = \field -> fieldType field == House
 
-instance Show Board where
-	show (Board fields rows columns) = 
-		"  " ++ show [ show c | c <- columns ] ++ "\n" ++
-		unlines [ show (rows !! index) ++ " " ++ show x | let listed = (splitEvery (length rows) fields), (x, index) <- listed `zip` [0..]]
+-- returns true if given field is a type of Empty (for readability only)
+isEmpty :: (Field -> Bool)
+isEmpty = \field -> fieldType field == Empty
 
+-- returns true if given field is a type of Tank (for readability only)
+isTank :: (Field -> Bool)
+isTank = \field -> fieldType field == Tank
+
+-- splits given list in chunks with a maximum length of n
 splitEvery _ [] = []
 splitEvery n list = first : (splitEvery n rest)
   where
